@@ -3,6 +3,7 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
+const ObjectId = require('mongodb').ObjectId;
 
 app.use(cors());
 app.use(express.json());
@@ -23,22 +24,58 @@ async function run() {
     try {
         await client.connect();
         const userCollection = client.db("foodExpress").collection("user");
-        /* const user = {
-            name: 'Sharif Osman',
-            age: 28,
-            email: 'sharif@gmail.com'
-        };
-        const result = await userCollection.insertOne(user);
-        console.log(`A user is created: ${result.insertedId}`); */
+        const adminCollection = client.db("foodExpress").collection("admin");
 
-        app.post('/user', (req, res) => {
+        //get user
+        app.get('/user', async (req, res) => {
+            const query = {};
+            const cursor = userCollection.find(query);
+            const users = await cursor.toArray();
+            res.send(users);
+        })
+
+        //get single user
+        app.get('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        })
+
+        // add a user
+        app.post('/user', async (req, res) => {
             const user = req.body;
-            console.log(user);
-            res.send(user);
+            const result = await userCollection.insertOne(user);
+            console.log('user created!');
+            res.send(result);
+        })
+
+        // delete a user
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        //POST: Add an Admin
+        app.post('/admin', async (req, res) => {
+            const admin = req.body;
+            const result = await adminCollection.insertOne(admin);
+            console.log('Admin Createrd!');
+            res.send(result);
+        })
+        // GET add admin data
+        app.get('/admin', async (req, res) => {
+            const query = {};
+            const cursor = adminCollection.find(query);
+            const admin = await cursor.toArray();
+            res.send(admin);
+
         })
     }
     finally {
-        await client.close();
+        // await client.close();
     }
 }
 
